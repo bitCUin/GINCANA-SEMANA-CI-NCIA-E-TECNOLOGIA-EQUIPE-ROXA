@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gincana SNCT 2026 — Equipe Roxa</title>
+<style>
+:root{--purple:#6d28d9;--deep:#3b0764;--light:#f5f0ff;--ink:#211a2b;--muted:#6d6478;--line:#e7def4;--green:#147d48;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:#faf8ff;color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(135deg,#3b0764,#7c3aed);color:#fff;padding:34px 18px}
+.hero{max-width:1000px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-weight:800;font-size:.76rem;opacity:.85}
+h1{font-size:clamp(1.8rem,5vw,3rem);line-height:1.1;margin:.5rem 0}.sub{opacity:.9;margin:0}
+main{max-width:1000px;margin:24px auto;padding:0 16px 56px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0;box-shadow:0 4px 18px #32105b0a}
+h2{margin:0 0 10px;color:var(--deep);font-size:1.35rem}h3{margin:0 0 6px;font-size:1.08rem}
+.note{color:var(--muted);font-size:.94rem}.rules{padding-left:22px;margin:8px 0}.rules li{margin:4px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:220px}label{display:block;font-weight:700;font-size:.9rem;margin-bottom:5px}
+input,select,button{font:inherit;border-radius:10px;padding:11px 12px}input,select{width:100%;border:1px solid #cfc3df;background:#fff;color:var(--ink)}
+button{border:0;background:var(--purple);color:#fff;font-weight:750;cursor:pointer}button:hover{filter:brightness(.95)}button:disabled{opacity:.55;cursor:not-allowed}.secondary{background:#eee7f8;color:var(--deep)}.danger{background:#fff0f0;color:var(--red);border:1px solid #ffd0d0}
+.status{padding:10px 12px;border-radius:10px;background:var(--light);color:var(--deep);margin-top:12px;white-space:pre-wrap}.status.error{background:#fff0f0;color:var(--red)}.status.ok{background:#eaf8ef;color:var(--green)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tab{background:#eee7f8;color:var(--deep)}.tab.active{background:var(--purple);color:#fff}
+.activity-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.activity{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
+.meta{font-size:.87rem;color:var(--muted)}.slots{font-size:.88rem;font-weight:750;color:var(--deep)}.participants{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--light);border:1px solid #e5d7fa;border-radius:999px;padding:4px 9px;font-size:.85rem}
+.chip button{padding:0;background:transparent;color:var(--red);font-size:1rem;line-height:1}
+select.person-select{margin-top:auto}.empty{color:var(--muted);font-style:italic;font-size:.9rem}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
+.small{font-size:.84rem;color:var(--muted)}.section-label{display:inline-block;background:#eee7f8;color:var(--deep);font-weight:800;border-radius:7px;padding:3px 8px;font-size:.76rem;margin-bottom:8px}
+@media(max-width:560px){.panel{padding:15px}header{padding:27px 16px}.row button{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="hero">
+<div class="eyebrow">3º Ano Informática · Equipe Roxa</div>
+<h1>Gincana SNCT 2026: Ciência Delas</h1>
+<p class="sub">Organização de participantes · Prêmio: viagem para São Paulo</p>
+</div></header>
+<main>
+<section class="panel">
+<h2>📌 Instruções para a turma</h2>
+<ul class="rules">
+<li>Cadastre seu nome e selecione as atividades das quais deseja participar.</li>
+<li>Confira os horários e não se inscreva em duas provas que ocorram no mesmo horário.</li>
+<li>Chegue com antecedência. Atrasos de mais de 10 minutos geram perda de 5 pontos para a turma.</li>
+<li>É obrigatório usar roupas, acessórios ou maquiagem roxa (vale 5 pontos de caracterização).</li>
+</ul>
+<p class="note">Placar geral: 1º lugar = 5 pts · 2º = 4 pts · 3º = 3 pts · 4º = 2 pts · 5º = 1 pt.</p>
+</section>
+<section class="panel">
+<h2>👤 Seu nome</h2>
+<p class="note">Cadastre o nome uma vez. Depois, escolha esse nome nas atividades. As alterações salvas ficam compartilhadas com a turma.</p>
+<div class="row">
+<div class="field"><label for="newName">Nome completo</label><input id="newName" maxlength="90" placeholder="Digite seu nome completo"></div>
+<button id="addName">Cadastrar nome</button>
+</div>
+<div id="nameStatus" class="status" role="status">Conecte o banco de dados seguindo o arquivo LEIA-ME para ativar o salvamento compartilhado.</div>
+<div style="margin-top:14px"><label for="filterNames">Nomes cadastrados</label><select id="filterNames"><option value="">Carregando nomes…</option></select></div>
+</section>
+<section class="panel">
+<h2>🗓️ Atividades e inscrições</h2>
+<p class="note">Selecione um nome em cada atividade e clique em <b>Salvar inscrições</b>. O sistema respeita os limites de vagas. As atividades simultâneas estão identificadas para ajudar na organização. Adicione as escolhas e depois clique em “Salvar inscrições” para gravá-las.</p>
+<div class="tabs" id="tabs"></div>
+<div id="activities" class="activity-list"></div>
+<div class="row" style="margin-top:18px">
+<button id="saveAll">Salvar inscrições</button>
+<button id="refresh" class="secondary">Atualizar lista</button>
+</div>
+<div id="saveStatus" class="status" role="status">As inscrições ainda não foram carregadas.</div>
+</section>
+<section class="panel">
+<h2>🎁 Gincana solidária — arrecadação</h2>
+<p><b>Prazo final:</b> 22/10 até as 14h. Produtos lacrados, limpos e com validade mínima até 30/11.</p>
+<div class="activity-list" id="donations"></div>
+<p class="small">A pontuação é por unidade arrecadada. Combine com a turma quem levará cada item.</p>
+</section>
+<footer>Equipe Roxa · 3º Ano Informática · SNCT 2026</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* CONFIGURAÇÃO: preencha com a URL e a chave anon/public do seu projeto Supabase.
+   Nunca coloque uma chave service_role neste arquivo público. */
+const SUPABASE_URL = "https://ydnngmsercitavhooyva.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlkbm5nbXNlcmNpdGF2aG9veXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODU1MDAsImV4cCI6MjEwNzg2MTUwMH0.IFUKFYkM_BuC8IJPIRI5MJekIu4wVa70Jr1dIadQgYU";
+const ready = window.supabase && SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLE_AQUI") && !SUPABASE_ANON_KEY.includes("COLE_AQUI");
+const db = ready ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const activities = [
+{id:"stop",group:"Semana",name:"Stop Literário",when:"20/10 · 13h30",detail:"Jogo de palavras e conhecimento literário.",limit:2,sim:"Atividade da semana"},
+{id:"cartazes",group:"Manhã",name:"Cartazes e Bandeiras",when:"23/10 · 8h às 9h30",detail:"Produção de cartazes e bandeiras.",limit:null,sim:"Abertura e preparação"},
+{id:"grito",group:"Manhã",name:"Liderança Grito de Guerra",when:"23/10 · 8h às 9h30",detail:"Liderança do grito de guerra.",limit:3,sim:"Abertura e preparação"},
+{id:"cafe",group:"Manhã",name:"Café Coletivo",when:"23/10 · 8h às 9h30",detail:"Organização do café coletivo.",limit:2,sim:"Abertura e preparação"},
+{id:"karaoke",group:"Manhã",name:"Karaokê Interrompido",when:"23/10 · 9h45 às 11h15",detail:"Pontuação por colocação.",limit:4,sim:"Provas simultâneas da manhã"},
+{id:"queimada",group:"Manhã",name:"Queimada",when:"23/10 · 9h45 às 11h15",detail:"Pontuação por colocação.",limit:10,sim:"Provas simultâneas da manhã"},
+{id:"faro",group:"Manhã",name:"Bom de Faro",when:"23/10 · 9h45 às 11h15",detail:"Adivinhação de aromas.",limit:3,sim:"Provas simultâneas da manhã"},
+{id:"escape-manha",group:"Manhã",name:"Escape Room (Manhã)",when:"23/10 · 9h45 às 11h15",detail:"A equipe mais rápida ganha 5 pontos bônus.",limit:5,sim:"Provas simultâneas da manhã"},
+{id:"fanart",group:"Manhã",name:"Releituras Visuais / Fanart",when:"23/10 · 11h30 às 12h",detail:"Apresentação de 1 minuto para o júri.",limit:2,sim:"Final da manhã"},
+{id:"taco",group:"Manhã",name:"Jogo de Taco",when:"23/10 · 11h30 às 12h",detail:"Disputa em dupla.",limit:2,sim:"Final da manhã"},
+{id:"tesouro",group:"Tarde",name:"Caça ao Tesouro",when:"23/10 · 13h30 às 15h",detail:"Vale 5 pontos + 5 pontos bônus se for a mais rápida.",limit:6,sim:"Provas simultâneas da tarde"},
+{id:"copo",group:"Tarde",name:"Quiz com Copo",when:"23/10 · 13h30 às 15h",detail:"Acerto soma, erro subtrai. Errar o alvo perde a vez.",limit:5,sim:"Provas simultâneas da tarde"},
+{id:"paladar",group:"Tarde",name:"Bom de Paladar",when:"23/10 · 13h30 às 15h",detail:"Adivinhação de sabores.",limit:3,sim:"Provas simultâneas da tarde"},
+{id:"escape-tarde",group:"Tarde",name:"Escape Room (Tarde)",when:"23/10 · 13h30 às 15h",detail:"A equipe mais rápida ganha 5 pontos bônus.",limit:5,sim:"Provas simultâneas da tarde"},
+{id:"palavra-musica",group:"Tarde",name:"Uma Palavra, Uma Música",when:"23/10 · 15h às 16h",detail:"Música e agilidade.",limit:4,sim:"Música e agilidade"},
+{id:"cosplay",group:"Tarde",name:"Concurso de Fantasia / Cosplay",when:"23/10 · 16h às 17h",detail:"Vale 5 pontos.",limit:null,sim:"Música e agilidade"},
+{id:"circuito",group:"Tarde",name:"Circuito de Agilidade",when:"23/10 · 15h às 17h",detail:"A equipe mais rápida ganha 5 pontos bônus.",limit:5,sim:"Música e agilidade"}
+];
+const donations=[
+["Leite (1 litro)","5 pts / unidade"],["Óleo (900 ml)","4 pts / unidade"],
+["Achocolatado em pó (mín. 350 g)","3 pts / unidade"],
+["Macarrão (500 g) e molho (mín. 300 g)","2 pts / unidade"],
+["Outros não perecíveis / higiene","1 pt / unidade"]
+];
+let people=[], signups=[], pendingSignups=[], selectedGroup="Semana";
+const $=id=>document.getElementById(id);
+function status(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderDonations(){$("donations").innerHTML=donations.map(d=>`<article class="activity"><h3>${d[0]}</h3><div class="slots">${d[1]}</div></article>`).join("")}
+function renderTabs(){const groups=["Semana","Manhã","Tarde"]; $("tabs").innerHTML=groups.map(g=>`<button class="tab ${g===selectedGroup?"active":""}" data-group="${g}">${g}</button>`).join("");$("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{selectedGroup=b.dataset.group;renderTabs();renderActivities()})}
+function renderNames(){const sel=$("filterNames");const prev=sel.value;sel.innerHTML='<option value="">Selecione um nome…</option>'+people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");if(people.some(p=>p.id===prev))sel.value=prev}
+function activitySignup(a){
+ const saved=signups.filter(s=>s.activity_id===a.id);
+ const pending=pendingSignups.filter(s=>s.activity_id===a.id).map(s=>({...s,id:"pending-"+s.person_id,name:people.find(p=>p.id===s.person_id)?.name||"Nome"}));
+ return [...saved,...pending];
+}
+function renderActivities(){
+ const list=activities.filter(a=>a.group===selectedGroup);
+ $("activities").innerHTML=list.map(a=>{
+  const signed=activitySignup(a);
+  const full=a.limit!==null&&signed.length>=a.limit;
+  const options=people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  return `<article class="activity" data-activity="${a.id}"><div><span class="section-label">${escapeHtml(a.sim)}</span><h3>${escapeHtml(a.name)}</h3><div class="meta">${escapeHtml(a.when)}</div><p class="note">${escapeHtml(a.detail)}</p></div><div class="slots">${a.limit===null?"Vagas livres":`${signed.length}/${a.limit} vagas preenchidas`}</div><div class="participants">${signed.length?signed.map(s=>`<span class="chip">${escapeHtml(s.name)} <button title="Remover ${escapeHtml(s.name)}" data-remove="${s.id}" aria-label="Remover inscrição">×</button></span>`).join(""):'<span class="empty">Ninguém inscrito ainda.</span>'}</div><label for="person-${a.id}">Adicionar participante</label><select class="person-select" id="person-${a.id}" ${!people.length||full?"disabled":""}><option value="">Selecione um nome…</option>${options}</select><button class="secondary add-signup" data-add="${a.id}" ${!people.length||full?"disabled":""}>Adicionar à atividade</button>${full?'<span class="small">Limite de vagas atingido.</span>':""}</article>`;
+ }).join("");
+ $("activities").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addSignup(b.dataset.add));
+ $("activities").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>removeSignup(b.dataset.remove));
+}
+async function loadAll(){
+ if(!db){status("nameStatus","Banco ainda não configurado. Abra LEIA-ME.txt e siga os passos do Supabase.","error");status("saveStatus","Preencha a URL e a chave anon no arquivo index.html depois de criar o projeto Supabase.","error");return}
+ status("saveStatus","Carregando dados compartilhados…");
+ const [p,s]=await Promise.all([db.from("people").select("*").order("name"),db.from("signups").select("*").order("created_at")]);
+ if(p.error||s.error){status("saveStatus","Erro ao carregar: "+(p.error?.message||s.error?.message),"error");return}
+ people=p.data||[]; signups=s.data||[];
+ // Join nomes para renderização
+ signups=signups.map(s=>({...s,name:people.find(p=>p.id===s.person_id)?.name||"Nome removido"}));
+ renderNames();renderActivities();status("saveStatus","Dados sincronizados com a turma.","ok");
+}
+async function addName(){
+ const name=$("newName").value.trim();
+ if(!name)return status("nameStatus","Digite um nome antes de cadastrar.","error");
+ if(!db)return status("nameStatus","Configure o Supabase conforme LEIA-ME.txt antes de salvar nomes.","error");
+ const duplicate=people.some(p=>p.name.toLocaleLowerCase("pt-BR")===name.toLocaleLowerCase("pt-BR"));
+ if(duplicate)return status("nameStatus","Esse nome já está cadastrado. Selecione-o na lista.","error");
+ const {error}=await db.from("people").insert({name});
+ if(error)return status("nameStatus","Não foi possível cadastrar: "+error.message,"error");
+ $("newName").value="";status("nameStatus","Nome cadastrado e compartilhado com a turma.","ok");await loadAll();
+}
+async function addSignup(activityId){
+ const personId=$("person-"+activityId)?.value;if(!personId)return status("saveStatus","Selecione um nome antes de adicionar.","error");
+ const a=activities.find(a=>a.id===activityId);
+ const current=signups.filter(s=>s.activity_id===activityId);
+ if(current.some(s=>s.person_id===personId)||pendingSignups.some(s=>s.activity_id===activityId&&s.person_id===personId))return status("saveStatus","Essa pessoa já está inscrita ou pendente nesta atividade.","error");
+ if(a.limit!==null&&current.length>=a.limit)return status("saveStatus","Esta atividade já atingiu o limite de vagas.","error");
+ // Alerta de conflito de horário para o usuário confirmar antes de gravar.
+ const conflicts=signups.filter(s=>s.person_id===personId&&s.activity_id!==activityId&&activities.find(x=>x.id===s.activity_id)?.sim===a.sim);
+ if(conflicts.length&&!confirm("Atenção: esta pessoa já está em outra atividade do mesmo bloco/horário. Deseja inscrevê-la mesmo assim?"))return;
+ if(!db)return status("saveStatus","Configure o Supabase para salvar inscrições compartilhadas.","error");
+ const {error}=await db.from("signups").insert({activity_id:activityId,person_id:personId});
+ if(error)return status("saveStatus","Não foi possível salvar: "+error.message,"error");
+ status("saveStatus","Inscrição salva e visível para a turma.","ok");await loadAll();
+}
+async function removeSignup(id){
+ if(!confirm("Remover esta inscrição da lista compartilhada?"))return;
+ const {error}=await db.from("signups").delete().eq("id",id);
+ if(error)return status("saveStatus","Não foi possível remover: "+error.message,"error");
+ status("saveStatus","Inscrição removida.","ok");await loadAll();
+}
+$("addName").onclick=addName;
+$("newName").addEventListener("keydown",e=>{if(e.key==="Enter")addName()});
+$("saveAll").onclick=async()=>{
+ if(!db)return status("saveStatus","Configure o Supabase para salvar inscrições compartilhadas.","error");
+ if(!pendingSignups.length)return loadAll();
+ const batch=[...pendingSignups];
+ const {error}=await db.from("signups").insert(batch);
+ if(error)return status("saveStatus","Não foi possível salvar. Confira vagas e inscrições duplicadas: "+error.message,"error");
+ pendingSignups=[];status("saveStatus","Inscrições salvas e compartilhadas com a turma.","ok");await loadAll();
+};
+$("refresh").onclick=loadAll;
+renderTabs();renderDonations();renderActivities();loadAll();
+</script>
+</body>
+</html>
