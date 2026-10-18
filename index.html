@@ -80,7 +80,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
 <script>
 /* CONFIGURAÇÃO: preencha com a URL e a chave anon/public do seu projeto Supabase.
    Nunca coloque uma chave service_role neste arquivo público. */
-const SUPABASE_URL = "https://ydnngmsercitavhooyva.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://ydnngmsercitavhooyva.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlkbm5nbXNlcmNpdGF2aG9veXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODU1MDAsImV4cCI6MjEwNzg2MTUwMH0.IFUKFYkM_BuC8IJPIRI5MJekIu4wVa70Jr1dIadQgYU";
 const ready = window.supabase && SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLE_AQUI") && !SUPABASE_ANON_KEY.includes("COLE_AQUI");
 const db = ready ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
