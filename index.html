@@ -26,7 +26,7 @@ button{border:0;background:var(--purple);color:#fff;font-weight:750;cursor:point
 .chip button{padding:0;background:transparent;color:var(--red);font-size:1rem;line-height:1}
 select.person-select{margin-top:auto}.empty{color:var(--muted);font-style:italic;font-size:.9rem}
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
-.small{font-size:.84rem;color:var(--muted)}.section-label{display:inline-block;background:#eee7f8;color:var(--deep);font-weight:800;border-radius:7px;padding:3px 8px;font-size:.76rem;margin-bottom:8px}
+.small{font-size:.84rem;color:var(--muted)}.donation-entry{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.donation-entry .chip{max-width:100%}.donation-form{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px}.donation-form button{grid-column:1/-1}.section-label{display:inline-block;background:#eee7f8;color:var(--deep);font-weight:800;border-radius:7px;padding:3px 8px;font-size:.76rem;margin-bottom:8px}
 @media(max-width:560px){.panel{padding:15px}header{padding:27px 16px}.row button{width:100%}}
 </style>
 </head>
@@ -49,37 +49,35 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
 </section>
 <section class="panel">
 <h2>👤 Seu nome</h2>
-<p class="note">Cadastre o nome uma vez. Depois, escolha esse nome nas atividades. As alterações salvas ficam compartilhadas com a turma.</p>
+
 <div class="row">
 <div class="field"><label for="newName">Nome completo</label><input id="newName" maxlength="90" placeholder="Digite seu nome completo"></div>
 <button id="addName">Cadastrar nome</button>
 </div>
-<div id="nameStatus" class="status" role="status">Conecte o banco de dados seguindo o arquivo LEIA-ME para ativar o salvamento compartilhado.</div>
+<div id="nameStatus" class="status" role="status" hidden></div>
 <div style="margin-top:14px"><label for="filterNames">Nomes cadastrados</label><select id="filterNames"><option value="">Carregando nomes…</option></select></div>
 </section>
 <section class="panel">
 <h2>🗓️ Atividades e inscrições</h2>
-<p class="note">Selecione um nome em cada atividade e clique em <b>Salvar inscrições</b>. O sistema respeita os limites de vagas. As atividades simultâneas estão identificadas para ajudar na organização. Adicione as escolhas e depois clique em “Salvar inscrições” para gravá-las.</p>
+
 <div class="tabs" id="tabs"></div>
 <div id="activities" class="activity-list"></div>
 <div class="row" style="margin-top:18px">
-<button id="saveAll">Salvar inscrições</button>
 <button id="refresh" class="secondary">Atualizar lista</button>
 </div>
-<div id="saveStatus" class="status" role="status">As inscrições ainda não foram carregadas.</div>
+<div id="saveStatus" class="status" role="status" hidden></div>
 </section>
 <section class="panel">
 <h2>🎁 Gincana solidária — arrecadação</h2>
 <p><b>Prazo final:</b> 22/10 até as 14h. Produtos lacrados, limpos e com validade mínima até 30/11.</p>
 <div class="activity-list" id="donations"></div>
-<p class="small">A pontuação é por unidade arrecadada. Combine com a turma quem levará cada item.</p>
+<p class="small">Registre quem está doando e a quantidade de unidades. Use o botão × para remover um registro.</p>
 </section>
 <footer>Equipe Roxa · 3º Ano Informática · SNCT 2026</footer>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* CONFIGURAÇÃO: preencha com a URL e a chave anon/public do seu projeto Supabase.
-   Nunca coloque uma chave service_role neste arquivo público. */
+/* Chave publicável do Supabase: segura para uso no navegador com RLS configurado. */
 const SUPABASE_URL = "https://ydnngmsercitavhooyva.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_dHRzTq5wt6Q1lW7RwQ8Ijg_Wr-Rakgp";
 const ready = window.supabase && SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("COLE_AQUI") && !SUPABASE_ANON_KEY.includes("COLE_AQUI");
@@ -105,16 +103,26 @@ const activities = [
 {id:"circuito",group:"Tarde",name:"Circuito de Agilidade",when:"23/10 · 15h às 17h",detail:"A equipe mais rápida ganha 5 pontos bônus.",limit:5,sim:"Música e agilidade"}
 ];
 const donations=[
-["Leite (1 litro)","5 pts / unidade"],["Óleo (900 ml)","4 pts / unidade"],
-["Achocolatado em pó (mín. 350 g)","3 pts / unidade"],
-["Macarrão (500 g) e molho (mín. 300 g)","2 pts / unidade"],
-["Outros não perecíveis / higiene","1 pt / unidade"]
+{id:"leite",name:"Leite (1 litro)",points:"5 pts / unidade"},
+{id:"oleo",name:"Óleo (900 ml)",points:"4 pts / unidade"},
+{id:"achocolatado",name:"Achocolatado em pó (mín. 350 g)",points:"3 pts / unidade"},
+{id:"macarrao-molho",name:"Macarrão (500 g) e molho (mín. 300 g)",points:"2 pts / unidade"},
+{id:"outros",name:"Outros não perecíveis / higiene",points:"1 pt / unidade"}
 ];
-let people=[], signups=[], pendingSignups=[], selectedGroup="Semana";
+let people=[], signups=[], donationEntries=[], pendingSignups=[], selectedGroup="Semana";
 const $=id=>document.getElementById(id);
-function status(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
+function status(id,msg,type=""){const el=$(id);el.hidden=false;el.textContent=msg;el.className="status "+type}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function renderDonations(){$("donations").innerHTML=donations.map(d=>`<article class="activity"><h3>${d[0]}</h3><div class="slots">${d[1]}</div></article>`).join("")}
+function renderDonations(){
+ const peopleOptions=people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+ $("donations").innerHTML=donations.map(d=>{
+  const entries=donationEntries.filter(x=>x.item_id===d.id);
+  const total=entries.reduce((sum,x)=>sum+Number(x.quantity||0),0);
+  return `<article class="activity" data-donation="${d.id}"><div><h3>${escapeHtml(d.name)}</h3><div class="slots">${d.points}</div><div class="meta">Total registrado: ${total} unidade(s)</div></div><div class="participants">${entries.length?entries.map(x=>`<div class="donation-entry"><span class="chip">${escapeHtml(x.person_name||"Participante removido")} · ${Number(x.quantity)} unidade(s)</span><button class="danger" type="button" data-remove-donation="${x.id}" aria-label="Remover doação">×</button></div>`).join(""):'<span class="empty">Nenhuma doação registrada.</span>'}</div><div class="donation-form"><div><label for="donor-${d.id}">Participante</label><select id="donor-${d.id}" ${people.length?"":"disabled"}><option value="">Selecione um nome…</option>${peopleOptions}</select></div><div><label for="qty-${d.id}">Quantidade</label><input id="qty-${d.id}" type="number" min="1" step="1" value="1" /></div><button type="button" data-add-donation="${d.id}" ${people.length?"":"disabled"}>Adicionar doação</button></div></article>`;
+ }).join("");
+ $("donations").querySelectorAll("[data-add-donation]").forEach(b=>b.onclick=()=>addDonation(b.dataset.addDonation));
+ $("donations").querySelectorAll("[data-remove-donation]").forEach(b=>b.onclick=()=>removeDonation(b.dataset.removeDonation));
+}
 function renderTabs(){const groups=["Semana","Manhã","Tarde"]; $("tabs").innerHTML=groups.map(g=>`<button class="tab ${g===selectedGroup?"active":""}" data-group="${g}">${g}</button>`).join("");$("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{selectedGroup=b.dataset.group;renderTabs();renderActivities()})}
 function renderNames(){const sel=$("filterNames");const prev=sel.value;sel.innerHTML='<option value="">Selecione um nome…</option>'+people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");if(people.some(p=>p.id===prev))sel.value=prev}
 function activitySignup(a){
@@ -134,19 +142,19 @@ function renderActivities(){
  $("activities").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>removeSignup(b.dataset.remove));
 }
 async function loadAll(){
- if(!db){status("nameStatus","Banco ainda não configurado. Abra LEIA-ME.txt e siga os passos do Supabase.","error");status("saveStatus","Preencha a URL e a chave anon no arquivo index.html depois de criar o projeto Supabase.","error");return}
+ if(!db){status("nameStatus","Não foi possível conectar ao banco de dados.","error");status("saveStatus","Não foi possível conectar ao banco de dados.","error");return}
  status("saveStatus","Carregando dados compartilhados…");
- const [p,s]=await Promise.all([db.from("people").select("*").order("name"),db.from("signups").select("*").order("created_at")]);
- if(p.error||s.error){status("saveStatus","Erro ao carregar: "+(p.error?.message||s.error?.message),"error");return}
- people=p.data||[]; signups=s.data||[];
+ const [p,s,d]=await Promise.all([db.from("people").select("*").order("name"),db.from("signups").select("*").order("created_at"),db.from("donations").select("*").order("created_at")]);
+ if(p.error||s.error||d.error){status("saveStatus","Erro ao carregar: "+(p.error?.message||s.error?.message||d.error?.message),"error");return}
+ people=p.data||[]; signups=s.data||[]; donationEntries=(d.data||[]).map(x=>({...x,person_name:people.find(p=>p.id===x.person_id)?.name||"Participante removido"}));
  // Join nomes para renderização
  signups=signups.map(s=>({...s,name:people.find(p=>p.id===s.person_id)?.name||"Nome removido"}));
- renderNames();renderActivities();status("saveStatus","Dados sincronizados com a turma.","ok");
+ renderNames();renderActivities();renderDonations();status("saveStatus","Dados atualizados.","ok");
 }
 async function addName(){
  const name=$("newName").value.trim();
  if(!name)return status("nameStatus","Digite um nome antes de cadastrar.","error");
- if(!db)return status("nameStatus","Configure o Supabase conforme LEIA-ME.txt antes de salvar nomes.","error");
+ if(!db)return status("nameStatus","Não foi possível conectar ao banco de dados.","error");
  const duplicate=people.some(p=>p.name.toLocaleLowerCase("pt-BR")===name.toLocaleLowerCase("pt-BR"));
  if(duplicate)return status("nameStatus","Esse nome já está cadastrado. Selecione-o na lista.","error");
  const {error}=await db.from("people").insert({name});
@@ -162,7 +170,7 @@ async function addSignup(activityId){
  // Alerta de conflito de horário para o usuário confirmar antes de gravar.
  const conflicts=signups.filter(s=>s.person_id===personId&&s.activity_id!==activityId&&activities.find(x=>x.id===s.activity_id)?.sim===a.sim);
  if(conflicts.length&&!confirm("Atenção: esta pessoa já está em outra atividade do mesmo bloco/horário. Deseja inscrevê-la mesmo assim?"))return;
- if(!db)return status("saveStatus","Configure o Supabase para salvar inscrições compartilhadas.","error");
+ if(!db)return status("saveStatus","Não foi possível conectar ao banco de dados.","error");
  const {error}=await db.from("signups").insert({activity_id:activityId,person_id:personId});
  if(error)return status("saveStatus","Não foi possível salvar: "+error.message,"error");
  status("saveStatus","Inscrição salva e visível para a turma.","ok");await loadAll();
@@ -173,16 +181,24 @@ async function removeSignup(id){
  if(error)return status("saveStatus","Não foi possível remover: "+error.message,"error");
  status("saveStatus","Inscrição removida.","ok");await loadAll();
 }
+async function addDonation(itemId){
+ if(!db)return status("saveStatus","Não foi possível conectar ao banco de dados.","error");
+ const personId=$("donor-"+itemId)?.value;
+ const quantity=Number($("qty-"+itemId)?.value);
+ if(!personId)return status("saveStatus","Selecione o participante da doação.","error");
+ if(!Number.isInteger(quantity)||quantity<1)return status("saveStatus","Informe uma quantidade inteira maior que zero.","error");
+ const {error}=await db.from("donations").insert({item_id:itemId,person_id:personId,quantity});
+ if(error)return status("saveStatus","Não foi possível registrar a doação: "+error.message,"error");
+ status("saveStatus","Doação registrada.","ok");await loadAll();
+}
+async function removeDonation(id){
+ if(!confirm("Remover este registro de doação?"))return;
+ const {error}=await db.from("donations").delete().eq("id",id);
+ if(error)return status("saveStatus","Não foi possível remover a doação: "+error.message,"error");
+ status("saveStatus","Registro de doação removido.","ok");await loadAll();
+}
 $("addName").onclick=addName;
 $("newName").addEventListener("keydown",e=>{if(e.key==="Enter")addName()});
-$("saveAll").onclick=async()=>{
- if(!db)return status("saveStatus","Configure o Supabase para salvar inscrições compartilhadas.","error");
- if(!pendingSignups.length)return loadAll();
- const batch=[...pendingSignups];
- const {error}=await db.from("signups").insert(batch);
- if(error)return status("saveStatus","Não foi possível salvar. Confira vagas e inscrições duplicadas: "+error.message,"error");
- pendingSignups=[];status("saveStatus","Inscrições salvas e compartilhadas com a turma.","ok");await loadAll();
-};
 $("refresh").onclick=loadAll;
 renderTabs();renderDonations();renderActivities();loadAll();
 </script>
