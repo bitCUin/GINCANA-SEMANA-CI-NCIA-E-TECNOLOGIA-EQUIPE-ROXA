@@ -26,14 +26,14 @@ button{border:0;background:var(--purple);color:#fff;font-weight:750;cursor:point
 .chip button{padding:0;background:transparent;color:var(--red);font-size:1rem;line-height:1}
 select.person-select{margin-top:auto}.empty{color:var(--muted);font-style:italic;font-size:.9rem}
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
-.small{font-size:.84rem;color:var(--muted)}.donation-entry{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.donation-entry .chip{max-width:100%}.donation-form{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px}.donation-form button{grid-column:1/-1}.section-label{display:inline-block;background:#eee7f8;color:var(--deep);font-weight:800;border-radius:7px;padding:3px 8px;font-size:.76rem;margin-bottom:8px}
+.small{font-size:.84rem;color:var(--muted)}.admin-panel{border:2px solid #6d28d9}.admin-tools{display:none}.admin-tools.visible{display:block}.admin-badge{display:inline-block;background:#eaf8ef;color:#147d48;border-radius:8px;padding:4px 8px;font-weight:800;font-size:.85rem}.donation-entry{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.donation-entry .chip{max-width:100%}.donation-form{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px}.donation-form button{grid-column:1/-1}.section-label{display:inline-block;background:#eee7f8;color:var(--deep);font-weight:800;border-radius:7px;padding:3px 8px;font-size:.76rem;margin-bottom:8px}
 @media(max-width:560px){.panel{padding:15px}header{padding:27px 16px}.row button{width:100%}}
 </style>
 </head>
 <body>
 <header><div class="hero">
 <div class="eyebrow">3º Ano Informática · Equipe Roxa</div>
-<h1>Gincana SNCT 2026</h1>
+<h1>Gincana SNCT 2026: Ciência Delas</h1>
 <p class="sub">Organização de participantes · Prêmio: viagem para São Paulo</p>
 </div></header>
 <main>
@@ -73,6 +73,22 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:12px}
 <div class="activity-list" id="donations"></div>
 <p class="small">Registre quem está doando e a quantidade de unidades. Use o botão × para remover um registro.</p>
 </section>
+<section class="panel admin-panel">
+<h2>🔐 Administração</h2>
+<p class="note">Área restrita à organização. Entre com a conta administrativa criada no Supabase para remover inscrições, nomes e doações.</p>
+<div id="adminLogin" class="row">
+<div class="field"><label for="adminEmail">E-mail administrativo</label><input id="adminEmail" type="email" autocomplete="username" placeholder="Seu e-mail"></div>
+<div class="field"><label for="adminPassword">Senha</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
+<button id="adminLoginBtn">Entrar</button>
+</div>
+<div class="row" id="adminSession" hidden><span id="adminSessionLabel" class="admin-badge">Administrador conectado</span><button class="secondary" id="adminLogoutBtn">Sair</button></div>
+<div id="adminStatus" class="status" role="status" hidden></div>
+<div id="adminTools" class="admin-tools">
+<h3 style="margin-top:16px">Gerenciar nomes cadastrados</h3>
+<p class="small">Remover um nome também apaga as inscrições e doações vinculadas a ele.</p>
+<div id="adminPeople" class="participants"></div>
+</div>
+</section>
 <footer>Equipe Roxa · 3º Ano Informática · SNCT 2026</footer>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -109,7 +125,7 @@ const donations=[
 {id:"macarrao-molho",name:"Macarrão (500 g) e molho (mín. 300 g)",points:"2 pts / unidade"},
 {id:"outros",name:"Outros não perecíveis / higiene",points:"1 pt / unidade"}
 ];
-let people=[], signups=[], donationEntries=[], pendingSignups=[], selectedGroup="Semana";
+let people=[], signups=[], donationEntries=[], pendingSignups=[], selectedGroup="Semana", isAdmin=false;
 const $=id=>document.getElementById(id);
 function status(id,msg,type=""){const el=$(id);el.hidden=false;el.textContent=msg;el.className="status "+type}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -118,7 +134,7 @@ function renderDonations(){
  $("donations").innerHTML=donations.map(d=>{
   const entries=donationEntries.filter(x=>x.item_id===d.id);
   const total=entries.reduce((sum,x)=>sum+Number(x.quantity||0),0);
-  return `<article class="activity" data-donation="${d.id}"><div><h3>${escapeHtml(d.name)}</h3><div class="slots">${d.points}</div><div class="meta">Total registrado: ${total} unidade(s)</div></div><div class="participants">${entries.length?entries.map(x=>`<div class="donation-entry"><span class="chip">${escapeHtml(x.person_name||"Participante removido")} · ${Number(x.quantity)} unidade(s)</span><button class="danger" type="button" data-remove-donation="${x.id}" aria-label="Remover doação">×</button></div>`).join(""):'<span class="empty">Nenhuma doação registrada.</span>'}</div><div class="donation-form"><div><label for="donor-${d.id}">Participante</label><select id="donor-${d.id}" ${people.length?"":"disabled"}><option value="">Selecione um nome…</option>${peopleOptions}</select></div><div><label for="qty-${d.id}">Quantidade</label><input id="qty-${d.id}" type="number" min="1" step="1" value="1" /></div><button type="button" data-add-donation="${d.id}" ${people.length?"":"disabled"}>Adicionar doação</button></div></article>`;
+  return `<article class="activity" data-donation="${d.id}"><div><h3>${escapeHtml(d.name)}</h3><div class="slots">${d.points}</div><div class="meta">Total registrado: ${total} unidade(s)</div></div><div class="participants">${entries.length?entries.map(x=>`<div class="donation-entry"><span class="chip">${escapeHtml(x.person_name||"Participante removido")} · ${Number(x.quantity)} unidade(s)</span>${isAdmin?`<button class="danger" type="button" data-remove-donation="${x.id}" aria-label="Remover doação">×</button>`:""}</div>`).join(""):'<span class="empty">Nenhuma doação registrada.</span>'}</div><div class="donation-form"><div><label for="donor-${d.id}">Participante</label><select id="donor-${d.id}" ${people.length?"":"disabled"}><option value="">Selecione um nome…</option>${peopleOptions}</select></div><div><label for="qty-${d.id}">Quantidade</label><input id="qty-${d.id}" type="number" min="1" step="1" value="1" /></div><button type="button" data-add-donation="${d.id}" ${people.length?"":"disabled"}>Adicionar doação</button></div></article>`;
  }).join("");
  $("donations").querySelectorAll("[data-add-donation]").forEach(b=>b.onclick=()=>addDonation(b.dataset.addDonation));
  $("donations").querySelectorAll("[data-remove-donation]").forEach(b=>b.onclick=()=>removeDonation(b.dataset.removeDonation));
@@ -136,7 +152,7 @@ function renderActivities(){
   const signed=activitySignup(a);
   const full=a.limit!==null&&signed.length>=a.limit;
   const options=people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
-  return `<article class="activity" data-activity="${a.id}"><div><span class="section-label">${escapeHtml(a.sim)}</span><h3>${escapeHtml(a.name)}</h3><div class="meta">${escapeHtml(a.when)}</div><p class="note">${escapeHtml(a.detail)}</p></div><div class="slots">${a.limit===null?"Vagas livres":`${signed.length}/${a.limit} vagas preenchidas`}</div><div class="participants">${signed.length?signed.map(s=>`<span class="chip">${escapeHtml(s.name)} <button title="Remover ${escapeHtml(s.name)}" data-remove="${s.id}" aria-label="Remover inscrição">×</button></span>`).join(""):'<span class="empty">Ninguém inscrito ainda.</span>'}</div><label for="person-${a.id}">Adicionar participante</label><select class="person-select" id="person-${a.id}" ${!people.length||full?"disabled":""}><option value="">Selecione um nome…</option>${options}</select><button class="secondary add-signup" data-add="${a.id}" ${!people.length||full?"disabled":""}>Adicionar à atividade</button>${full?'<span class="small">Limite de vagas atingido.</span>':""}</article>`;
+  return `<article class="activity" data-activity="${a.id}"><div><span class="section-label">${escapeHtml(a.sim)}</span><h3>${escapeHtml(a.name)}</h3><div class="meta">${escapeHtml(a.when)}</div><p class="note">${escapeHtml(a.detail)}</p></div><div class="slots">${a.limit===null?"Vagas livres":`${signed.length}/${a.limit} vagas preenchidas`}</div><div class="participants">${signed.length?signed.map(s=>`<span class="chip">${escapeHtml(s.name)} ${isAdmin?`<button title="Remover ${escapeHtml(s.name)}" data-remove="${s.id}" aria-label="Remover inscrição">×</button>`:""}</span>`).join(""):'<span class="empty">Ninguém inscrito ainda.</span>'}</div><label for="person-${a.id}">Adicionar participante</label><select class="person-select" id="person-${a.id}" ${!people.length||full?"disabled":""}><option value="">Selecione um nome…</option>${options}</select><button class="secondary add-signup" data-add="${a.id}" ${!people.length||full?"disabled":""}>Adicionar à atividade</button>${full?'<span class="small">Limite de vagas atingido.</span>':""}</article>`;
  }).join("");
  $("activities").querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addSignup(b.dataset.add));
  $("activities").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>removeSignup(b.dataset.remove));
@@ -149,7 +165,7 @@ async function loadAll(){
  people=p.data||[]; signups=s.data||[]; donationEntries=(d.data||[]).map(x=>({...x,person_name:people.find(p=>p.id===x.person_id)?.name||"Participante removido"}));
  // Join nomes para renderização
  signups=signups.map(s=>({...s,name:people.find(p=>p.id===s.person_id)?.name||"Nome removido"}));
- renderNames();renderActivities();renderDonations();status("saveStatus","Dados atualizados.","ok");
+ renderNames();renderActivities();renderDonations();renderAdminPeople();status("saveStatus","Dados atualizados.","ok");
 }
 async function addName(){
  const name=$("newName").value.trim();
@@ -176,11 +192,51 @@ async function addSignup(activityId){
  status("saveStatus","Inscrição salva e visível para a turma.","ok");await loadAll();
 }
 async function removeSignup(id){
+ if(!isAdmin)return status("saveStatus","Somente a administração pode remover inscrições.","error");
  if(!confirm("Remover esta inscrição da lista compartilhada?"))return;
  const {error}=await db.from("signups").delete().eq("id",id);
  if(error)return status("saveStatus","Não foi possível remover: "+error.message,"error");
  status("saveStatus","Inscrição removida.","ok");await loadAll();
 }
+function renderAdminPeople(){
+ const el=$("adminPeople");
+ if(!el)return;
+ el.innerHTML=isAdmin?(people.length?people.map(p=>`<span class="chip">${escapeHtml(p.name)} <button type="button" data-remove-person="${p.id}" aria-label="Remover ${escapeHtml(p.name)}">×</button></span>`).join(""):'<span class="empty">Nenhum nome cadastrado.</span>'):'<span class="small">Entre como administrador para gerenciar os nomes.</span>';
+ el.querySelectorAll('[data-remove-person]').forEach(b=>b.onclick=()=>removePerson(b.dataset.removePerson));
+}
+async function removePerson(id){
+ if(!isAdmin)return status("adminStatus","Somente a administração pode remover nomes.","error");
+ const person=people.find(p=>p.id===id);
+ if(!person)return;
+ if(!confirm(`Remover o nome “${person.name}”? As inscrições e doações vinculadas também serão apagadas.`))return;
+ const {error}=await db.from("people").delete().eq("id",id);
+ if(error)return status("adminStatus","Não foi possível remover o nome: "+error.message,"error");
+ status("adminStatus","Nome e registros vinculados removidos.","ok");await loadAll();
+}
+async function refreshAdminState(){
+ if(!db)return;
+ const {data:{session}}=await db.auth.getSession();
+ isAdmin=false;
+ if(session){
+  const {data,error}=await db.from("admin_users").select("user_id").eq("user_id",session.user.id).maybeSingle();
+  isAdmin=!error&&!!data;
+ }
+ $("adminLogin").hidden=!!session;
+ $("adminSession").hidden=!session;
+ $("adminSessionLabel").textContent=isAdmin?"Administrador conectado":"Conta conectada sem permissão administrativa";
+ $("adminTools").classList.toggle("visible",isAdmin);
+ if(session&&!isAdmin)status("adminStatus","Esta conta não está autorizada como administradora.","error");
+ else if(isAdmin)status("adminStatus","Acesso administrativo autorizado.","ok");
+ renderActivities();renderDonations();renderAdminPeople();
+}
+async function adminLogin(){
+ const email=$("adminEmail").value.trim(), password=$("adminPassword").value;
+ if(!email||!password)return status("adminStatus","Informe e-mail e senha.","error");
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error)return status("adminStatus","Não foi possível entrar: "+error.message,"error");
+ $("adminPassword").value="";await refreshAdminState();
+}
+async function adminLogout(){await db.auth.signOut();isAdmin=false;await refreshAdminState();status("adminStatus","Você saiu da área administrativa.");}
 async function addDonation(itemId){
  if(!db)return status("saveStatus","Não foi possível conectar ao banco de dados.","error");
  const personId=$("donor-"+itemId)?.value;
@@ -192,12 +248,17 @@ async function addDonation(itemId){
  status("saveStatus","Doação registrada.","ok");await loadAll();
 }
 async function removeDonation(id){
+ if(!isAdmin)return status("saveStatus","Somente a administração pode remover doações.","error");
  if(!confirm("Remover este registro de doação?"))return;
  const {error}=await db.from("donations").delete().eq("id",id);
  if(error)return status("saveStatus","Não foi possível remover a doação: "+error.message,"error");
  status("saveStatus","Registro de doação removido.","ok");await loadAll();
 }
 $("addName").onclick=addName;
+$("adminLoginBtn").onclick=adminLogin;
+$("adminLogoutBtn").onclick=adminLogout;
+$("adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")adminLogin()});
+if(db){db.auth.onAuthStateChange(()=>{setTimeout(refreshAdminState,0)});refreshAdminState();}
 $("newName").addEventListener("keydown",e=>{if(e.key==="Enter")addName()});
 $("refresh").onclick=loadAll;
 renderTabs();renderDonations();renderActivities();loadAll();
